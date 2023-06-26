@@ -1,0 +1,65 @@
+#!/bin/bash
+#SBATCH --job-name=Kneaddata-SE
+#SBATCH --qos=medium
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --mem=16gb
+#SBATCH --time=7-00:00:00
+#SBATCH --output=Kneaddata_qc_prueba_SINGLE.log
+
+#Set paths (uncomment when you are finished)
+INPUT_DIR=/storage/tbc/gut_core/CoreV2/muestras/FASTQS/PRJDB3601_Japan/raw_FASTQs
+OUTPUT_DIR=/storage/tbc/gut_core/CoreV2/Pruebas_QC/Programs_Comparative/kneaddata/Nishijima2016/kneaddata_out
+ADAPTERS=none
+FASTQC_PATH=/home/enroig2/.conda/envs/kneaddata_0.12.0/bin/fastqc
+TRIMMO_PATH=/home/enroig2/metagenomics/quality_control/kneaddata/trim_tools/
+BOWTIE2_DB=/home/enroig2/metagenomics/quality_control/kneaddata/examples/demo_db
+
+#Echo paths
+echo "Kneaddata QC SE:"
+echo "INPUT_DIR:" $INPUT_DIR
+echo "OUTPUT_DIR:" $OUTPUT_DIR
+echo "ADAPTERS:" $ADAPTERS
+echo "FASTQC_PATH:" $FASTQC_PATH
+echo "TRIMMO_PATH:" $TRIMMO_PATH
+echo "Bowtie2 Database:" $BOWTIE2_DB
+
+#Load anaconda module
+module load anaconda/anaconda3_2022.10
+
+#Load conda env
+source activate kneaddata_0.12.0
+conda info
+conda list
+
+##Loop for processing samples(only SINGLE files)
+echo "Running Kneaddata SINGLE:"
+for f1 in $(ls $INPUT_DIR/*.fastq.gz | grep -v "_1.fastq.gz" | grep -v "_2.fastq.gz")
+do
+	###Set name
+	base=$(basename $f1 .fastq.gz)
+
+	###Show message
+	echo "Processing Sample..."
+	echo $base
+
+	###QC with kneaddata
+	#Input and Output files
+	#Paths to Fastqc and Trimmomatic
+	#Trim Overrepresented/Repetitive sequences
+	#Trimmomatic options
+	#Adapters
+	#Bowtie2 DB
+	#Number of threads
+	kneaddata \
+		--unpaired $f1 --output $OUTPUT_DIR \
+		--fastqc $FASTQC_PATH --trimmomatic $TRIMMO_PATH \
+		--run-trim-repetitive \
+		--trimmomatic-options="SLIDINGWINDOW:4:15" --trimmomatic-options="MINLEN:60" --trimmomatic-options="LEADING:20" --trimmomatic-options="TRAILING:20" \
+		--sequencer-source $ADAPTERS \
+		-db $BOWTIE2_DB \
+		--threads 6
+done
+
+#End script
+echo "End Script! Bye!"

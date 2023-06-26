@@ -1,0 +1,35 @@
+#!/bin/bash
+#SBATCH --job-name=Fastp_Zeller-QC
+#SBATCH --qos=medium
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=6gb
+#SBATCH --time=7-00:00:00
+#SBATCH --output=fastp_qc_PRJEB6070_Zeller2014.log
+
+#Set paths
+INPUT_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJEB6070_Zeller2014/treat_fastqs
+OUTPUT_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJEB6070_Zeller2014/fastp
+
+#Load anaconda module
+module load anaconda/anaconda3_2022.10
+
+#Load conda env
+source activate qc_programs_Mar2023
+conda info
+conda list
+
+#Run Fastp PAIRED
+bash fastp_qc_PAIRED.sh $INPUT_DIR $OUTPUT_DIR
+
+#Run Fastp SINGLE
+bash fastp_qc_SINGLE.sh $INPUT_DIR $OUTPUT_DIR $DB_PATH
+
+#Run Fastp PAIRED (PolyG: NextSeq and NovaSeq)
+bash fastp_qc_PAIRED_polyg.sh $INPUT_DIR $OUTPUT_DIR
+
+#Run Fastp SINGLE (PolyG: NextSeq and NovaSeq)
+bash fastp_qc_SINGLE_polyg.sh $INPUT_DIR $OUTPUT_DIR $DB_PATH
+
+#End script
+echo "End Script! Bye!"

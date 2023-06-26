@@ -1,0 +1,146 @@
+#Default config file for eukdetect. Copy and edit for analysis
+
+#Directory where EukDetect output should be written
+output_dir: /storage/tbc/gut_core/CoreV2/Muestras_Enrique/MetaHIT/PRJEB6337_Qin2014/Euk_output
+
+#Indicate whether reads are paired (true) or single (false)
+paired_end: true
+
+#filename excluding sample name. No need to edit if paired_end = false
+fwd_suffix: _1.fastq.gz
+
+#filename excludign sample name. no need to edit if paired_end = false
+rev_suffix: _2.fastq.gz
+
+#length of your reads. pre-trimming reads not recommended
+readlen: 75
+
+#full path to directory with raw fastq files
+fq_dir: /storage/tbc/gut_core/CoreV2/Muestras_Enrique/MetaHIT/PRJEB6337_Qin2014/bowtie/results
+
+#full path to folder with eukdetect database files
+database_dir: /home/enroig2/metagenomics/EukDetect/eukdb
+
+#name of database. Default is original genomes only database name
+database_prefix: ncbi_eukprot_met_arch_markers.fna
+
+#full path to eukdetect installation folder
+eukdetect_dir: /home/enroig2/metagenomics/EukDetect
+
+#list sample names here. fastqs must correspond to {samplename}{se_suffix} for SE reads or {samplename}{fwd_suffix} and {samplename}{rev_suffix} for PE
+#each sample name should be preceded by 2 spaces and followed by a colon character
+samples:
+  HD-10_qc_fHP:
+  HD-11_qc_fHP:
+  HD-12_qc_fHP:
+  HD-13_qc_fHP:
+  HD-14_qc_fHP:
+  HD-15_qc_fHP:
+  HD-16_qc_fHP:
+  HD-17_qc_fHP:
+  HD-18_qc_fHP:
+  HD-19_qc_fHP:
+  HD-1_qc_fHP:
+  HD-20_qc_fHP:
+  HD-21_qc_fHP:
+  HD-22_qc_fHP:
+  HD-23_qc_fHP:
+  HD-24_qc_fHP:
+  HD-25_qc_fHP:
+  HD-26_qc_fHP:
+  HD-27_qc_fHP:
+  HD-28_qc_fHP:
+  HD-29_qc_fHP:
+  HD-2_qc_fHP:
+  HD-30_qc_fHP:
+  HD-31_qc_fHP:
+  HD-32_qc_fHP:
+  HD-33_qc_fHP:
+  HD-34_qc_fHP:
+  HD-35_qc_fHP:
+  HD-36_qc_fHP:
+  HD-37_qc_fHP:
+  HD-38_qc_fHP:
+  HD-39_qc_fHP:
+  HD-3_qc_fHP:
+  HD-40_qc_fHP:
+  HD-41_qc_fHP:
+  HD-42_qc_fHP:
+  HD-43_qc_fHP:
+  HD-44_qc_fHP:
+  HD-45_qc_fHP:
+  HD-46_qc_fHP:
+  HD-47_qc_fHP:
+  HD-48_qc_fHP:
+  HD-49_qc_fHP:
+  HD-4_qc_fHP:
+  HD-50_qc_fHP:
+  HD-51_qc_fHP:
+  HD-52_qc_fHP:
+  HD-53_qc_fHP:
+  HD-54_qc_fHP:
+  HD-55_qc_fHP:
+  HD-56_qc_fHP:
+  HD-57_qc_fHP:
+  HD-58_qc_fHP:
+  HD-59_qc_fHP:
+  HD-5_qc_fHP:
+  HD-60_qc_fHP:
+  HD-61_qc_fHP:
+  HD-62_qc_fHP:
+  HD-63_qc_fHP:
+  HD-64_qc_fHP:
+  HD-65_qc_fHP:
+  HD-66_qc_fHP:
+  HD-67_qc_fHP:
+  HD-68_qc_fHP:
+  HD-69_qc_fHP:
+  HD-6_qc_fHP:
+  HD-70_qc_fHP:
+  HD-71_qc_fHP:
+  HD-72_qc_fHP:
+  HD-73_qc_fHP:
+  HD-74_qc_fHP:
+  HD-75_qc_fHP:
+  HD-76_qc_fHP:
+  HD-77_qc_fHP:
+  HD-78_qc_fHP:
+  HD-79_qc_fHP:
+  HD-7_qc_fHP:
+  HD-80_qc_fHP:
+  HD-81_qc_fHP:
+  HD-82_qc_fHP:
+  HD-83_qc_fHP:
+  HD-8_qc_fHP:
+  HD-9_qc_fHP:
+  HV10_qc_fHP:
+  HV11_qc_fHP:
+  HV12_qc_fHP:
+  HV13_qc_fHP:
+  HV14_qc_fHP:
+  HV15_qc_fHP:
+  HV16_qc_fHP:
+  HV17_qc_fHP:
+  HV18_qc_fHP:
+  HV19_qc_fHP:
+  HV1_qc_fHP:
+  HV20_qc_fHP:
+  HV21_qc_fHP:
+  HV22_qc_fHP:
+  HV23_qc_fHP:
+  HV24_qc_fHP:
+  HV25_qc_fHP:
+  HV26_qc_fHP:
+  HV27_qc_fHP:
+  HV28_qc_fHP:
+  HV29_qc_fHP:
+  HV2_qc_fHP:
+  HV30_qc_fHP:
+  HV31_qc_fHP:
+  HV3_qc_fHP:
+  HV4_qc_fHP:
+  HV5_qc_fHP:
+  HV6_qc_fHP:
+  HV7_qc_fHP:
+  HV8_qc_fHP:
+  HV9_qc_fHP:

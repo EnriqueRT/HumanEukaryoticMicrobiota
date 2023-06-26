@@ -1,0 +1,41 @@
+#!/bin/bash
+#SBATCH --job-name=FastQC_Even
+#SBATCH --qos=medium
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=6gb
+#SBATCH --time=2-00:00:00
+#SBATCH --output=check_qc_PRJEB30834_Even2021_QC-bowtie.log
+
+#Set paths
+INPUT_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJEB30834_Even2021/bowtie
+OUTPUT_DIR_FASTQC=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJEB30834_Even2021/FASTQC/bowtie
+OUTPUT_DIR_MULTI=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJEB30834_Even2021/MULTIQC/bowtie
+
+#Echo paths
+echo "Check QC Programs:"
+echo "INPUT_DIR:" $INPUT_DIR
+echo "OUTPUT_DIR_FASTQC:" $OUTPUT_DIR_FASTQC
+echo "OUTPUT_DIR_MULTI:" $OUTPUT_DIR_MULTI
+
+#Load anaconda module
+module load anaconda/anaconda3_2022.10
+
+#Load conda env
+source activate check_qc_programs_Mar2023
+conda info
+conda list
+
+#Enter INPUT_DIR
+cd $INPUT_DIR
+
+#Run FastQC
+echo "Running FastQC:"
+fastqc *.fastq.gz -o $OUTPUT_DIR_FASTQC --threads 8
+
+#Run Multiqc
+echo "Running MultiQC"
+multiqc $OUTPUT_DIR_FASTQC/*.zip --outdir $OUTPUT_DIR_MULTI --interactive
+
+#End script
+echo "End Script! Bye!"

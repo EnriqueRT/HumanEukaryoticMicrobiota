@@ -1,0 +1,19 @@
+---
+title: "curatedMetagenomicData"
+author: "Enrique_Roig"
+date: "2022-10-18"
+output: html_document
+---
+
+# Creación tablas curated
+```{r}
+library(curatedMetagenomicData)
+library(DT)
+library(dplyr)
+
+# TABLA METADATOS
+QinJ_2012 = sampleMetadata |> filter(study_name == "QinJ_2012")
+
+#ESCRIBIR LA TABLA DE METADATOS EN UN FICHERO
+write.table(QinJ_2012, quote=FALSE, sep="\t", row.names = FALSE, file = "QinJ_2012_R.tsv")
+```

@@ -1,0 +1,48 @@
+#!/bin/bash
+#SBATCH --job-name=Euk_Wang
+#SBATCH --qos=medium
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=6
+#SBATCH --mem=30gb
+#SBATCH --time=7-00:00:00
+#SBATCH --output=eukdetect_PRJNA438847_Wang2018.log
+
+#Set paths
+
+#Path with bowtie samples data
+FQ_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJNA438847_Wang2018/bowtie
+#Indicate whether reads are paired (true) or single (false)
+LIBRARY_LAYOUT=true
+#Indicate read length
+READ_LENGTH=75
+#Generate path to save the outputs of EukDetect
+mkdir Euk_output
+OUTPUT_DIR_EUK=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJNA438847_Wang2018/Euk_output
+#Path to save the configfile (OPTIONAL). The output file will be created in the current directory if not indicated 
+#If you want to indicate the path you have to pass the parameter "-o2"
+#OUTPUT_DIR_CONFIG=
+
+#Run the program that generates the configfile
+python3 generate_configfile.py	-i $FQ_DIR \
+				-l $LIBRARY_LAYOUT \
+				-r $READ_LENGTH \
+				-o1 $OUTPUT_DIR_EUK
+
+#Path to snakefile
+SNAKEFILE=/home/enroig2/metagenomics/EukDetect/rules/eukdetect_eukfrac.rules
+#Path to configfile generate
+CONFIGFILE=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJNA438847_Wang2018/configfile.txt
+
+#Load anaconda module
+module load anaconda/anaconda3_2022.10
+
+#Load conda env
+source activate eukdetect
+conda info
+conda list
+
+#Run snakemake 
+snakemake --snakefile $SNAKEFILE --configfile $CONFIGFILE --cores 16 runall
+
+#End script
+echo "End Script! Bye!"

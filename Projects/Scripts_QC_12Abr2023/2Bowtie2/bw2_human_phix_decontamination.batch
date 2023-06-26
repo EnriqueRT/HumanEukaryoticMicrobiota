@@ -1,0 +1,30 @@
+#!/bin/bash
+#SBATCH --job-name=BW2-Human-Phix
+#SBATCH --qos=medium
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=10gb
+#SBATCH --time=7-00:00:00
+#SBATCH --output=bw2_decontamination_human_phix_PRJDB4176_Yachida2019.log
+
+#Set paths
+INPUT_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJDB4176_Yachida2019/fastp
+OUTPUT_DIR=/storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJDB4176_Yachida2019/bowtie
+DB_PATH=/storage/tbc/BW2-indexes/PhixViralProj14015_HumanGRCh38_index/PhixViralProj14015_HumanGRCh38
+
+#Load anaconda module
+module load anaconda/anaconda3_2022.10
+
+#Load conda env
+source activate qc_programs_Mar2023
+conda info
+conda list
+
+#Run BW2 HumanPhix Decontamination PAIRED
+bash QC_BW2_HumanPhix_PAIRED.sh $INPUT_DIR $OUTPUT_DIR $DB_PATH
+
+#Run BW2 HumanPhix Decontamination SINGLE
+bash QC_BW2_HumanPhix_SINGLE.sh $INPUT_DIR $OUTPUT_DIR $DB_PATH
+
+#End script
+echo "End Script! Bye!"

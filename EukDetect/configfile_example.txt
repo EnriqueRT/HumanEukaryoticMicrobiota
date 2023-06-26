@@ -1,0 +1,144 @@
+#Default config file for eukdetect. Copy and edit for analysis
+
+#Directory where EukDetect output should be written
+output_dir: /storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJNA485056_Pasolli2019/Euk_output
+
+#Indicate whether reads are paired (true) or single (false)
+paired_end: true
+
+#filename excluding sample name. No need to edit if paired_end = false
+fwd_suffix: _1.fastq.gz
+
+#filename excludign sample name. no need to edit if paired_end = false
+rev_suffix: _2.fastq.gz
+
+#length of your reads. pre-trimming reads not recommended
+readlen: 75
+
+#full path to directory with raw fastq files
+fq_dir: /storage/tbc/gut_core/CoreV2/Muestras_Enrique/Datasets_Generales/PRJNA485056_Pasolli2019/bowtie
+
+#full path to folder with eukdetect database files
+database_dir: /home/enroig2/metagenomics/EukDetect/eukdb
+
+#name of database. Default is original genomes only database name
+database_prefix: ncbi_eukprot_met_arch_markers.fna
+
+#full path to eukdetect installation folder
+eukdetect_dir: /home/enroig2/metagenomics/EukDetect
+
+#list sample names here. fastqs must correspond to {samplename}{se_suffix} for SE reads or {samplename}{fwd_suffix} and {samplename}{rev_suffix} for PE
+#each sample name should be preceded by 2 spaces and followed by a colon character
+samples:
+  SRR7658579_qc_fHP:
+  SRR7658580_qc_fHP:
+  SRR7658581_qc_fHP:
+  SRR7658582_qc_fHP:
+  SRR7658583_qc_fHP:
+  SRR7658584_qc_fHP:
+  SRR7658585_qc_fHP:
+  SRR7658586_qc_fHP:
+  SRR7658587_qc_fHP:
+  SRR7658588_qc_fHP:
+  SRR7658589_qc_fHP:
+  SRR7658590_qc_fHP:
+  SRR7658591_qc_fHP:
+  SRR7658592_qc_fHP:
+  SRR7658593_qc_fHP:
+  SRR7658594_qc_fHP:
+  SRR7658595_qc_fHP:
+  SRR7658596_qc_fHP:
+  SRR7658597_qc_fHP:
+  SRR7658598_qc_fHP:
+  SRR7658599_qc_fHP:
+  SRR7658600_qc_fHP:
+  SRR7658601_qc_fHP:
+  SRR7658602_qc_fHP:
+  SRR7658603_qc_fHP:
+  SRR7658604_qc_fHP:
+  SRR7658605_qc_fHP:
+  SRR7658606_qc_fHP:
+  SRR7658607_qc_fHP:
+  SRR7658608_qc_fHP:
+  SRR7658609_qc_fHP:
+  SRR7658610_qc_fHP:
+  SRR7658611_qc_fHP:
+  SRR7658612_qc_fHP:
+  SRR7658613_qc_fHP:
+  SRR7658614_qc_fHP:
+  SRR7658615_qc_fHP:
+  SRR7658616_qc_fHP:
+  SRR7658617_qc_fHP:
+  SRR7658618_qc_fHP:
+  SRR7658619_qc_fHP:
+  SRR7658620_qc_fHP:
+  SRR7658621_qc_fHP:
+  SRR7658622_qc_fHP:
+  SRR7658623_qc_fHP:
+  SRR7658624_qc_fHP:
+  SRR7658625_qc_fHP:
+  SRR7658626_qc_fHP:
+  SRR7658627_qc_fHP:
+  SRR7658628_qc_fHP:
+  SRR7658629_qc_fHP:
+  SRR7658630_qc_fHP:
+  SRR7658631_qc_fHP:
+  SRR7658632_qc_fHP:
+  SRR7658633_qc_fHP:
+  SRR7658634_qc_fHP:
+  SRR7658635_qc_fHP:
+  SRR7658636_qc_fHP:
+  SRR7658637_qc_fHP:
+  SRR7658638_qc_fHP:
+  SRR7658639_qc_fHP:
+  SRR7658640_qc_fHP:
+  SRR7658641_qc_fHP:
+  SRR7658642_qc_fHP:
+  SRR7658643_qc_fHP:
+  SRR7658644_qc_fHP:
+  SRR7658645_qc_fHP:
+  SRR7658646_qc_fHP:
+  SRR7658647_qc_fHP:
+  SRR7658648_qc_fHP:
+  SRR7658649_qc_fHP:
+  SRR7658650_qc_fHP:
+  SRR7658651_qc_fHP:
+  SRR7658652_qc_fHP:
+  SRR7658653_qc_fHP:
+  SRR7658654_qc_fHP:
+  SRR7658655_qc_fHP:
+  SRR7658656_qc_fHP:
+  SRR7658657_qc_fHP:
+  SRR7658658_qc_fHP:
+  SRR7658659_qc_fHP:
+  SRR7658660_qc_fHP:
+  SRR7658661_qc_fHP:
+  SRR7658662_qc_fHP:
+  SRR7658663_qc_fHP:
+  SRR7658664_qc_fHP:
+  SRR7658665_qc_fHP:
+  SRR7658666_qc_fHP:
+  SRR7658667_qc_fHP:
+  SRR7658668_qc_fHP:
+  SRR7658669_qc_fHP:
+  SRR7658670_qc_fHP:
+  SRR7658671_qc_fHP:
+  SRR7658672_qc_fHP:
+  SRR7658673_qc_fHP:
+  SRR7658674_qc_fHP:
+  SRR7658675_qc_fHP:
+  SRR7658676_qc_fHP:
+  SRR7658677_qc_fHP:
+  SRR7658678_qc_fHP:
+  SRR7658679_qc_fHP:
+  SRR7658680_qc_fHP:
+  SRR7658681_qc_fHP:
+  SRR7658682_qc_fHP:
+  SRR7658683_qc_fHP:
+  SRR7658684_qc_fHP:
+  SRR7658685_qc_fHP:
+  SRR7658686_qc_fHP:
+  SRR7658687_qc_fHP:
+  SRR7658688_qc_fHP:
+  SRR7658689_qc_fHP:
+  SRR7658690_qc_fHP:
