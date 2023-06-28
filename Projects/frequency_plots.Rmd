@@ -1,0 +1,165 @@
+---
+title: "Frequency of interest variables in the datasets"
+subtitle: "Percent Stacked Barplot Study"
+author: "Enrique Roig Tormo"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+# Load libraries
+```{r}
+library(readr)
+library(ComplexHeatmap)
+library(dplyr)
+library(RColorBrewer)
+library(ggplot2)
+library(reshape2)
+library(tidyverse)
+```
+
+# Load data
+```{r}
+metadata = read.csv("GLOBAL_METADATA.tsv", header = T, sep='\t', na.strings=c("","NA"))
+```
+
+
+# Percent Stacked Barplot by individual of the distribution of the variables in the dataset
+
+## Get individuals metadata
+```{r}
+metadata_interest = metadata[,c("individual","continent","country_HDI_group","host_lifestyle","host_sex","host_age_group", "host_state")]
+metadata_ind_interest = metadata_interest %>% group_by(individual) %>% summarise(across(everything(), unique), .groups = 'drop') %>% as.data.frame()
+```
+
+
+## Obtain the frequency table by individual
+```{r}
+# filter the first column
+metadata_ind_interest <- subset(metadata_ind_interest, select = -1)
+
+# Apply pivot_longer to get the desired table
+result <- metadata_ind_interest %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value) %>%
+  summarise(count = n())
+
+frec_tab_ind <- result %>%
+  mutate(relative_frequency = (count / 4353) * 100)
+colnames(frec_tab_ind) = c("variable", "factor", "value", "frequency")
+```
+
+
+# Percent Stacked Barplot by individual
+```{r}
+# Define colour palette
+continent_palette <- c("Africa" = "#FA9FB5", "Asia" = "#F768A1", "Europe" = "#DD3497", 
+                      "North America" = "#AE017E", "Oceania" = "#7A0177")
+HDI_palette <- c("High" = "#41B6C4", "Low" = "#1D91C0", "Medium" = "#225EA8", "Very High" = "#253494")
+age_palette <- c("Adult" = "#E1BEE7", "Child" = "#CE93D8", "Elder" = "#BA68C8", "Teen" = "#9C27B0")
+lifestyle_palette <- c("Intermediate" = "#9E9D24", "Rural" = "#D4E157", "Urban" = "#C0CA33")
+sex_palette <- c("Female" = "#FB8C00", "Male" = "#E65100")
+state_palette <- c("Healthy" = "#4CAF50")
+
+frec_tab_ind_filt <- subset(frec_tab_ind, !is.na(factor))
+
+# Create the Percent Stacked Barplot
+barplot = ggplot(frec_tab_ind_filt, aes(x = variable, y = frequency, fill = factor)) +
+  geom_bar(position="stack", stat="identity") +
+  labs(y = "Human gut datasets by individual (%)") +
+  xlab(NULL) + 
+  scale_x_discrete(labels = c("Continent", "HDI group", "Age group", "Life style", "Sex", "Health state")) +
+  theme_minimal() +
+  scale_fill_manual(values = c(continent_palette, HDI_palette, age_palette, lifestyle_palette, sex_palette, state_palette)) +
+  theme(legend.position="none")
+barplot
+```
+
+
+
+# Percent Stacked Barplot by sample of the distribution of the variables in the dataset
+
+## Get samples metadata
+```{r}
+metadata_samp_interest = metadata[,c("continent","country_HDI_group","host_lifestyle","host_age_group", "host_sex", "host_state")]
+```
+
+
+## Obtain the frequency table by sample
+```{r}
+# Apply pivot_longer to get the desired table
+result <- metadata_samp_interest %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value) %>%
+  summarise(count = n())
+
+frec_tab_samp <- result %>%
+  mutate(relative_frequency = (count / 6021) * 100)
+colnames(frec_tab_samp) = c("variable", "factor", "value", "frequency")
+```
+
+
+# Percent Stacked Barplot by sample
+```{r}
+# Define colour palette
+continent_palette <- c("Africa" = "#FA9FB5", "Asia" = "#F768A1", "Europe" = "#DD3497", 
+                      "North America" = "#AE017E", "Oceania" = "#7A0177")
+HDI_palette <- c("High" = "#41B6C4", "Low" = "#1D91C0", "Medium" = "#225EA8", "Very High" = "#253494")
+age_palette <- c("Adult" = "#E1BEE7", "Child" = "#CE93D8", "Elder" = "#BA68C8", "Teen" = "#9C27B0")
+lifestyle_palette <- c("Intermediate" = "#9E9D24", "Rural" = "#D4E157", "Urban" = "#C0CA33")
+sex_palette <- c("Female" = "#FB8C00", "Male" = "#E65100")
+state_palette <- c("Healthy" = "#4CAF50")
+
+frec_tab_samp_filt <- subset(frec_tab_samp, !is.na(factor))
+
+# Create the Percent Stacked Barplot
+barplot = ggplot(frec_tab_samp_filt, aes(x = variable, y = frequency, fill = factor)) +
+  geom_bar(position="stack", stat="identity") +
+  labs(y = "Human gut datasets by sample (%)") +
+  xlab(NULL) + 
+  scale_x_discrete(labels = c("Continent", "HDI group", "Age group", "Life style", "Sex", "Health state")) +
+  theme_minimal() +
+  scale_fill_manual(values = c(continent_palette, HDI_palette, age_palette, lifestyle_palette, sex_palette, state_palette)) +
+  theme(legend.position="none")
+barplot
+```
+
+
+## Create legend for both plots
+```{r}
+continent_palette <- c("Africa", "Asia", "Europe", "North America", "Oceania")
+HDI_palette <- c("High", "Low", "Medium", "Very High")
+age_palette <- c("Adult", "Child", "Elder", "Teen")
+lifestyle_palette <- c("Intermediate", "Rural", "Urban")
+sex_palette <- c("Female", "Male")
+state_palette <- c("Healthy")
+
+colour = c("#FA9FB5", "#F768A1", "#DD3497", "#AE017E", "#7A0177")
+continent_legend = Legend(legend_gp = gpar(fill = colour), title = "Continent", labels = continent_palette)
+
+colour = c("#41B6C4", "#1D91C0", "#225EA8", "#253494")
+HDI_legend = Legend(legend_gp = gpar(fill = colour), title = "HDI group", labels = HDI_palette)
+
+colour = c("#E1BEE7", "#CE93D8", "#BA68C8", "#9C27B0")
+age_legend = Legend(legend_gp = gpar(fill = colour), title = "Age group", labels = age_palette)
+
+colour = c("#9E9D24", "#D4E157", "#C0CA33")
+lifestyle_legend = Legend(legend_gp = gpar(fill = colour), title = "Life style", labels = lifestyle_palette)
+
+colour = c("#FB8C00", "#E65100")
+sex_palette = Legend(legend_gp = gpar(fill = colour), title = "Sex", labels = sex_palette)
+
+colour = "#4CAF50"
+state_legend = Legend(legend_gp = gpar(fill = colour), title = "Health state", labels = state_palette)
+
+pd = packLegend(continent_legend, HDI_legend, age_legend, lifestyle_legend, sex_palette, state_legend, direction = "horizontal")
+
+draw(pd)
+```

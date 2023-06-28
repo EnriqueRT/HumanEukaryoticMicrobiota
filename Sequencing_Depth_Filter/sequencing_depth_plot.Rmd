@@ -1,0 +1,54 @@
+---
+title: "sequencing_depth_plot"
+author: "Enrique Roig Tormo"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+
+# Load library
+```{r}
+library(ggplot2)
+```
+
+
+# Dot plot filter sequencing depth
+```{r}
+# Load files
+concat_track_table = read.csv("concat_track_table.tsv", sep = "\t")
+presence_absence_genus_table = read.csv("presence_absence_genus_table.tsv", sep = "\t")
+
+presence_absence_genus_table$Sum = rowSums(presence_absence_genus_table[, -1])
+
+# Calculate the maximum and minimum value of the Sum column
+maximo_valor = max(presence_absence_genus_table$Sum)
+minimo_valor = min(presence_absence_genus_table$Sum)
+
+# Select the interest columns
+track_table_fi = concat_track_table[, c(1, 4)]
+conteos_fi = presence_absence_genus_table[, c("Sample", "Sum")]
+
+# Calculate the maximum value of the bowtie column
+maximo_valor = max(concat_track_table$bowtie)
+minimo_valor = min(concat_track_table$bowtie)
+
+# Merge the final track_table with the Bowtie reading count together with the total sum of taxa found per sample
+merge = merge(track_table_fi, conteos_fi, by = "Sample")
+
+# Create the dot plot with ggplot2
+ggplot(merge, aes(x = merge$bowtie, y = merge$Sum)) +
+  geom_point(color = "#084081", size = 3) +
+  labs(title = "Sequencing depth vs TaxID per sample", x = "Reads", y = "TaxID counts") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+```

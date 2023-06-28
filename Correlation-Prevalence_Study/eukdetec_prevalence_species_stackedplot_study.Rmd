@@ -1,0 +1,359 @@
+---
+title: "Eukdetect prevalence species stackedplot study"
+subtitle: "Prevalence Study"
+author: "Enrique Roig Tormo/Samuel Piquer-Esteban"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+# Load libraries
+```{r}
+library(readr)
+library(ComplexHeatmap)
+library(dplyr)
+library(RColorBrewer)
+library(ggplot2)
+library(reshape2)
+library(tidyverse)
+library(gridExtra)
+```
+
+# Load data
+```{r}
+metadata = read.csv("GLOBAL_METADATA.tsv", header = T, sep='\t', na.strings=c("","NA"))
+track_table = read.csv("concat_track_table.tsv", header = T, sep='\t', na.strings=c("","NA"))
+presence_absence_genus_table = read_delim("presence_absence_genus_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+taxonomy_genus_table = read_delim("taxonomy_genus_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+presence_absence_sp_table = read_delim("presence_absence_species_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+total_marker_cov_sp_table = read_delim("total_marker_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+taxonomy_sp_table = read_delim("taxonomy_species_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+```
+
+# Filter samples by 1,200,000 reads (f1) and check for all absent taxids 
+
+## F1
+```{r}
+table(track_table$bowtie > 1200000)
+```
+There are 59 samples that we are going to discard due to low sequencing depth. 
+
+```{r}
+#Get list of samples of interest / Filter low sequencing samples (f1)
+samples_interest = track_table$Sample[track_table$bowtie > 1200000]
+presence_absence_genus_table_f1 = presence_absence_genus_table[presence_absence_genus_table$Sample %in% samples_interest,]
+presence_absence_sp_table_f1 = presence_absence_sp_table[presence_absence_sp_table$Sample %in% samples_interest,]
+total_marker_cov_sp_table_f1 = total_marker_cov_sp_table[total_marker_cov_sp_table$Sample %in% samples_interest,]
+```
+
+
+## check for all absent taxids for species
+```{r}
+#Get list of species taxids
+sp_taxids = as.character(taxonomy_sp_table$TaxID)
+
+#Check if there was any specie with all 0 after filtering f1
+for (sp in sp_taxids) {
+  if (sum(presence_absence_sp_table_f1[,sp]) == 0) {
+    print(sp)
+  }
+}
+##No all species taxid zeros were detected
+```
+
+We did not lose any taxids (nor genus or species) after applying filter f1.
+
+
+# Get presence-absence tables for species by individual
+```{r}
+#Species
+#Add individual column
+presence_absence_sp_table_f1_ind = merge(metadata[,c("file_sample_name","individual")],presence_absence_sp_table_f1,by.x="file_sample_name",by.y="Sample")
+#Drop sample name
+presence_absence_sp_table_f1_ind = presence_absence_sp_table_f1_ind[,!(names(presence_absence_sp_table_f1_ind) %in% c("file_sample_name"))]
+#Sum values by individual
+appearences_by_ind_sp_table_f1 = presence_absence_sp_table_f1_ind %>% group_by(individual) %>% summarise(across(everything(), sum), .groups = 'drop') %>% as.data.frame()
+#Get presence-absence table
+##Make copy to work on
+presence_absence_by_ind_sp_table_f1 = appearences_by_ind_sp_table_f1
+##Update rownames
+rownames(presence_absence_by_ind_sp_table_f1)=presence_absence_by_ind_sp_table_f1$individual
+##Remove individuals column
+presence_absence_by_ind_sp_table_f1[,1] <- NULL
+##Change all values > 0 to 1
+presence_absence_by_ind_sp_table_f1[presence_absence_by_ind_sp_table_f1>0] <- 1
+```
+
+
+# Get individuals metadata
+```{r}
+metadata_f1 = metadata[metadata$file_sample_name %in% samples_interest,]
+metadata_interest_4_ind_f1 = metadata_f1[,c("individual","country","continent","country_HDI_group","host_lifestyle","host_age_group")]
+metadata_ind_interest_f1 = metadata_interest_4_ind_f1 %>% group_by(individual) %>% summarise(across(everything(), unique), .groups = 'drop') %>% as.data.frame()
+```
+
+Note: this previous line of code would generate a warning message if unique would detect more than one value. 
+
+
+# Filter presence_absence_by_ind_sp_table_f1 by interest genus (Blastocystis, Saccharomyces, Malassezia)
+
+## F2
+```{r}
+genus_interest <- c("Blastocystis", "Saccharomyces", "Malassezia")
+taxonomy_sp_table_f1 <- taxonomy_sp_table[taxonomy_sp_table$genus %in% genus_interest, ]
+
+# Generate list with TaxIDs of interest
+list_taxids <- taxonomy_sp_table_f1$TaxID
+
+# Filter presence_absence_by_ind_sp_table_f1 by these TaxIDs
+presence_absence_by_ind_sp_table_f2 <- presence_absence_by_ind_sp_table_f1[, colnames(presence_absence_by_ind_sp_table_f1) %in% list_taxids]
+```
+
+
+# Prevalence study
+
+- Individuals Presence-Absence Table: presence_absence_by_ind_sp_table_f2
+
+- Individuals Metadata of Interest: metadata_ind_interest_f1
+
+## Combinations of the 3 Main variables
+
+```{r}
+#Number of unique combinations
+unique(paste(metadata_ind_interest_f1$country, metadata_ind_interest_f1$host_age_group, metadata_ind_interest_f1$host_lifestyle))
+length(unique(paste(metadata_ind_interest_f1$country, metadata_ind_interest_f1$host_age_group, metadata_ind_interest_f1$host_lifestyle)))
+```
+
+```{r}
+#Number of individuals per combination
+n_ind_by_comb = sort(table(paste(metadata_ind_interest_f1$country,"|" ,metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)))
+n_ind_by_comb
+```
+
+```{r}
+#TaxIDs by total individuals
+sort(colSums(presence_absence_by_ind_sp_table_f2))
+```
+Top Species:
+- Saccharomyces_cerevisiae(4932) is in 667 individuals (Total Prev: 0.339959)
+- Blastocystis_sp._subtype_3(944168) is in 471 individuals (Total Prev: 0.240061)
+- Blastocystis_sp._subtype_1(944036) is in 282 individuals (Total Prev: 0.143731)
+- Blastocystis_sp._subtype_2(944160) is in 242 individuals (Total Prev: 0.123344)
+- Malassezia_restricta(76775) is in 160 individuals (Total Prev: 0.081549)
+- Blastocystis_sp._subtype_4(944170) is in 82 individuals
+- Malassezia_globosa(76773) is in 23 individuals
+- Blastocystis_sp._subtype_6(944208) is in 12 individuals
+- Blastocystis_sp._subtype_8(429571) is in 7 individuals
+- Blastocystis_hominis(12968) is in 7 individuals
+- Saccharomyces_eubayanus(1080349) is in 4 individuals
+- Blastocystis_sp._subtype_9(1544353) is in 2 individuals
+- Saccharomyces_uvarum(230603) is in 1 individual
+- Malassezia_furfur(55194) is in 1 individual
+- Malassezia_dermatis(169489) is in 1 individual
+
+
+```{r}
+#Number of genera by individual
+print("Summary of Number of genera by individual:")
+summary(rowSums(presence_absence_by_ind_sp_table_f2))
+#Quick Frecuency by individual
+print("Number of Individuals by Genera detected:")
+table(rowSums(presence_absence_by_ind_sp_table_f2))
+```
+
+## Filter Combinations with low number of individuals (at least 5 individuals) (f2)
+```{r}
+#Get combs of interest
+combs_5_or_more = names(n_ind_by_comb)[n_ind_by_comb>=5]
+combs_5_or_more
+#Add combs column to metadata
+metadata_ind_interest_f1$comb = paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)
+#Merge comb column with presence_absence_by_ind_sp_table_f2
+presence_absence_by_ind_sp_table_f2_comb = merge(metadata_ind_interest_f1[,c("individual","comb")],presence_absence_by_ind_sp_table_f2,by.y = 0, by.x = "individual")
+#Drop individuals column
+presence_absence_by_ind_sp_table_f2_comb$individual <- NULL
+#Filter low ind combs
+presence_absence_by_ind_sp_table_f2_comb_f2 = presence_absence_by_ind_sp_table_f2_comb[presence_absence_by_ind_sp_table_f2_comb$comb %in% combs_5_or_more,]
+```
+
+## Get prevalence table by comb
+```{r}
+#Mean in presence-absence data is equivalent to prevalence
+prevalence_table_ind_sp_f2_comb_f2 = presence_absence_by_ind_sp_table_f2_comb_f2 %>% group_by(comb) %>% summarise(across(everything(), mean), .groups = 'drop') %>% as.data.frame()
+```
+
+## Quick exploration of max prevalence values
+```{r}
+print("Max prevalence values per taxid")
+head(sort(apply(prevalence_table_ind_sp_f2_comb_f2, 2, max)), -1)
+```
+
+## Format prevalence table for stacked barcharts
+```{r}
+#Change row names to comb values
+#rownames(prevalence_table_ind_sp_f2_comb_f2) <- prevalence_table_ind_sp_f2_comb_f2$comb
+#Drop comb column
+#prevalence_table_ind_sp_f2_comb_f2$comb <- NULL
+#Change taxids for genus-name(taxid)
+final_tax_names=c()
+for (taxid in names(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_taxonomy = taxonomy_sp_table_f1[taxonomy_sp_table_f1$TaxID==taxid,]
+  temp_tax_name = paste(temp_taxonomy$species,'(',temp_taxonomy$TaxID,')',sep = "")
+  final_tax_names = c(final_tax_names, temp_tax_name)
+}
+names(prevalence_table_ind_sp_f2_comb_f2) <- final_tax_names
+colnames(prevalence_table_ind_sp_f2_comb_f2)[1] <- "Intersects"
+```
+
+
+## Get metadata of interest for combinations
+```{r}
+#Drop individuals columns
+metadata_combs = metadata_ind_interest_f1
+metadata_combs$individual <- NULL
+#unique values per comb
+metadata_combs_uniq = metadata_combs %>% group_by(comb) %>% summarise(across(everything(), unique), .groups = 'drop') %>% as.data.frame()
+#Add number of individuals per comb
+#Check that the order matches (all true in this case)
+#metadata_combs_uniq$comb==names(table(paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)))
+metadata_combs_uniq$n_individuals <- table(paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle))
+```
+
+
+# Filter prevalence tables by interest genus
+```{r}
+list_Blasto = c("Blastocystis_sp._subtype_1(944036)", "Blastocystis_sp._subtype_2(944160)", 
+                "Blastocystis_sp._subtype_3(944168)", "Blastocystis_sp._subtype_4(944170)", 
+                "Blastocystis_sp._subtype_6(944208)", "Blastocystis_sp._subtype_8(429571)", 
+                "Blastocystis_sp._subtype_9(1544353)", "Blastocystis_hominis(12968)", "Intersects")
+prevalence_Blasto = prevalence_table_ind_sp_f2_comb_f2[, colnames(prevalence_table_ind_sp_f2_comb_f2) %in% list_Blasto]
+
+list_Sacchar = c("Saccharomyces_cerevisiae(4932)", "Saccharomyces_eubayanus(1080349)",
+                 "Saccharomyces_uvarum(230603)", "Intersects")
+prevalence_Sacchar = prevalence_table_ind_sp_f2_comb_f2[, colnames(prevalence_table_ind_sp_f2_comb_f2) %in% list_Sacchar]
+
+list_Malass = c("Malassezia_restricta(76775)", "Malassezia_globosa(76773)", 
+                "Malassezia_furfur(55194)", "Malassezia_dermatis(169489)", "Intersects")
+prevalence_Malass = prevalence_table_ind_sp_f2_comb_f2[, colnames(prevalence_table_ind_sp_f2_comb_f2) %in% list_Malass]
+```
+
+
+# Generate final table prevalence by interest genus
+```{r}
+# Vector with new names columns
+names <- c("Species", "Prevalence")
+
+# Use melt() function to convert a dataframe from a wide to long format
+prevalence_Blasto_f1 <- melt(prevalence_Blasto, id="Intersects")
+colnames(prevalence_Blasto_f1)[c(2, 3)] <- names
+
+prevalence_Sacchar_f1 <- melt(prevalence_Sacchar, id="Intersects")
+colnames(prevalence_Sacchar_f1)[c(2, 3)] <- names
+
+prevalence_Malass_f1 <- melt(prevalence_Malass, id="Intersects")
+colnames(prevalence_Malass_f1)[c(2, 3)] <- names
+```
+
+
+# Stacked barchart Blastocystis
+```{r,fig.height=50,fig.width=35}
+prevalence_Blasto_f2 <- prevalence_Blasto_f1 %>% filter(Prevalence != 0)
+
+Species = prevalence_Blasto_f2$Species
+Conditions = prevalence_Blasto_f2$Intersects
+Prevalence = prevalence_Blasto_f2$Prevalence
+
+stack_Blasto = ggplot(prevalence_Blasto_f2, aes(fill=Species, y=Conditions, x=Prevalence)) +
+  geom_bar(position="stack", stat="identity", width = 0.8) + 
+  geom_text(aes(label = ifelse(Prevalence < 0.03, "", paste0(round(Prevalence*100, 1)))), 
+            position = position_stack(vjust = 0.5), colour = "white", size=13) +
+  scale_x_continuous(labels = scales::number_format(scale = 100), limits = c(0, 1), 
+                     breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)) +
+  labs(x = "Prevalence (%)", y = "Conditions")
+
+# Adjust axes and legend size
+stack_Blasto <- stack_Blasto + theme(axis.text.y = element_text(size = 45),
+                                    axis.title.y = element_text(size = 50),
+                                    axis.text.x = element_text(size = 40),
+                                    axis.title.x = element_text(size = 50, margin = margin(t = 40)),
+                                    legend.text = element_text(size = 43),
+                                    legend.title = element_text(size = 43),
+                                    legend.position = "bottom",
+                                    legend.margin = margin(t = 50))
+
+
+stack_Blasto <- stack_Blasto + guides(fill = guide_legend(nrow = 4, byrow = TRUE))
+stack_Blasto
+```
+
+
+# Stacked barchart Saccharomyces
+```{r,fig.height=50,fig.width=35}
+prevalence_Sacchar_f2 <- prevalence_Sacchar_f1 %>% filter(Prevalence != 0)
+
+Species = prevalence_Sacchar_f2$Species
+Conditions = prevalence_Sacchar_f2$Intersects
+Prevalence = prevalence_Sacchar_f2$Prevalence
+
+stack_Sacchar = ggplot(prevalence_Sacchar_f2, aes(fill=Species, y=Conditions, x=Prevalence)) +
+  geom_bar(position="stack", stat="identity", width = 0.8) + 
+  geom_text(aes(label = ifelse(Prevalence < 0.03, "", paste0(round(Prevalence*100, 1)))), 
+            position = position_stack(vjust = 0.5), colour = "white", size=13) +
+  scale_x_continuous(labels = scales::number_format(scale = 100), limits = c(0, 1), 
+                     breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)) +
+  labs(x = "Prevalence (%)", y = "Conditions")
+
+# Adjust axes and legend size
+stack_Sacchar <- stack_Sacchar + theme(axis.text.y = element_text(size = 45),
+                                    axis.title.y = element_text(size = 50),
+                                    axis.text.x = element_text(size = 40),
+                                    axis.title.x = element_text(size = 50, margin = margin(t = 40)),
+                                    legend.text = element_text(size = 43),
+                                    legend.title = element_text(size = 43),
+                                    legend.position = "bottom",
+                                    legend.margin = margin(t = 50))
+
+
+stack_Sacchar <- stack_Sacchar + guides(fill = guide_legend(nrow = 4, byrow = TRUE))
+stack_Sacchar
+```
+
+
+# Stacked barchart Malassezia
+```{r,fig.height=35,fig.width=35}
+prevalence_Malass_f2 <- prevalence_Malass_f1 %>% filter(Prevalence != 0)
+
+Species = prevalence_Malass_f2$Species
+Conditions = prevalence_Malass_f2$Intersects
+Prevalence = prevalence_Malass_f2$Prevalence
+
+stack_Malass = ggplot(prevalence_Malass_f2, aes(fill=Species, y=Conditions, x=Prevalence)) +
+  geom_bar(position="stack", stat="identity", width = 0.8) + 
+  geom_text(aes(label = ifelse(Prevalence < 0.03, "", paste0(round(Prevalence*100, 1)))), 
+            position = position_stack(vjust = 0.5), colour = "white", size=13) +
+  scale_x_continuous(labels = scales::number_format(scale = 100), limits = c(0, 1.2), 
+                     breaks = c(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2)) +
+  labs(x = "Prevalence (%)", y = "Conditions")
+
+# Adjust axes and legend size
+stack_Malass <- stack_Malass + theme(axis.text.y = element_text(size = 45),
+                                    axis.title.y = element_text(size = 50),
+                                    axis.text.x = element_text(size = 40),
+                                    axis.title.x = element_text(size = 50, margin = margin(t = 40)),
+                                    legend.text = element_text(size = 43),
+                                    legend.title = element_text(size = 43),
+                                    legend.position = "bottom",
+                                    legend.margin = margin(t = 50))
+
+
+stack_Malass <- stack_Malass + guides(fill = guide_legend(nrow = 2, byrow = TRUE))
+stack_Malass
+```
+

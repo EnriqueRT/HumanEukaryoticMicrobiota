@@ -1,0 +1,465 @@
+---
+title: "Eukdetect prevalence species heatmap study"
+subtitle: "Prevalence Study"
+author: "Enrique Roig Tormo/Samuel Piquer-Esteban"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+\newpage
+
+# Load libraries
+```{r}
+library(readr)
+library(ComplexHeatmap)
+library(dplyr)
+library(RColorBrewer)
+library(ggplot2)
+library(reshape2)
+library(tidyverse)
+library(gridExtra)
+```
+
+# Load data
+```{r}
+metadata = read.csv("GLOBAL_METADATA.tsv", header = T, sep='\t', na.strings=c("","NA"))
+track_table = read.csv("concat_track_table.tsv", header = T, sep='\t', na.strings=c("","NA"))
+presence_absence_genus_table = read_delim("presence_absence_genus_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+taxonomy_genus_table = read_delim("taxonomy_genus_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+presence_absence_sp_table = read_delim("presence_absence_species_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+total_marker_cov_sp_table = read_delim("total_marker_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+taxonomy_sp_table = read_delim("taxonomy_species_table.tsv", delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+```
+
+# Filter samples by 1,200,000 reads (f1) and check for all absent taxids 
+
+## F1
+```{r}
+table(track_table$bowtie > 1200000)
+```
+There are 59 samples that we are going to discard due to low sequencing depth. 
+
+```{r}
+#Get list of samples of interest / Filter low sequencing samples (f1)
+samples_interest = track_table$Sample[track_table$bowtie > 1200000]
+presence_absence_genus_table_f1 = presence_absence_genus_table[presence_absence_genus_table$Sample %in% samples_interest,]
+presence_absence_sp_table_f1 = presence_absence_sp_table[presence_absence_sp_table$Sample %in% samples_interest,]
+total_marker_cov_sp_table_f1 = total_marker_cov_sp_table[total_marker_cov_sp_table$Sample %in% samples_interest,]
+```
+
+
+## check for all absent taxids for species
+```{r}
+#Get list of species taxids
+sp_taxids = as.character(taxonomy_sp_table$TaxID)
+
+#Check if there was any specie with all 0 after filtering f1
+for (sp in sp_taxids) {
+  if (sum(presence_absence_sp_table_f1[,sp]) == 0) {
+    print(sp)
+  }
+}
+##No all species taxid zeros were detected
+```
+
+We did not lose any taxids (nor genus or species) after applying filter f1.
+
+
+# Get presence-absence tables for species by individual
+```{r}
+#Species
+#Add individual column
+presence_absence_sp_table_f1_ind = merge(metadata[,c("file_sample_name","individual")],presence_absence_sp_table_f1,by.x="file_sample_name",by.y="Sample")
+#Drop sample name
+presence_absence_sp_table_f1_ind = presence_absence_sp_table_f1_ind[,!(names(presence_absence_sp_table_f1_ind) %in% c("file_sample_name"))]
+#Sum values by individual
+appearences_by_ind_sp_table_f1 = presence_absence_sp_table_f1_ind %>% group_by(individual) %>% summarise(across(everything(), sum), .groups = 'drop') %>% as.data.frame()
+#Get presence-absence table
+##Make copy to work on
+presence_absence_by_ind_sp_table_f1 = appearences_by_ind_sp_table_f1
+##Update rownames
+rownames(presence_absence_by_ind_sp_table_f1)=presence_absence_by_ind_sp_table_f1$individual
+##Remove individuals column
+presence_absence_by_ind_sp_table_f1[,1] <- NULL
+##Change all values > 0 to 1
+presence_absence_by_ind_sp_table_f1[presence_absence_by_ind_sp_table_f1>0] <- 1
+```
+
+
+# Get individuals metadata
+```{r}
+metadata_f1 = metadata[metadata$file_sample_name %in% samples_interest,]
+metadata_interest_4_ind_f1 = metadata_f1[,c("individual","country","continent","country_HDI_group","host_lifestyle","host_age_group")]
+metadata_ind_interest_f1 = metadata_interest_4_ind_f1 %>% group_by(individual) %>% summarise(across(everything(), unique), .groups = 'drop') %>% as.data.frame()
+```
+
+Note: this previous line of code would generate a warning message if unique would detect more than one value. 
+
+
+# Filter presence_absence_by_ind_sp_table_f1 by interest genus (Blastocystis, Saccharomyces, Malassezia)
+
+## F2
+```{r}
+genus_interest <- c("Blastocystis", "Saccharomyces", "Malassezia")
+taxonomy_sp_table_f1 <- taxonomy_sp_table[taxonomy_sp_table$genus %in% genus_interest, ]
+
+# Generate list with TaxIDs of interest
+list_taxids <- taxonomy_sp_table_f1$TaxID
+
+# Filter presence_absence_by_ind_sp_table_f1 by these TaxIDs
+presence_absence_by_ind_sp_table_f2 <- presence_absence_by_ind_sp_table_f1[, colnames(presence_absence_by_ind_sp_table_f1) %in% list_taxids]
+```
+
+
+# Prevalence study
+
+- Individuals Presence-Absence Table: presence_absence_by_ind_sp_table_f2
+
+- Individuals Metadata of Interest: metadata_ind_interest_f1
+
+## Combinations of the 3 Main variables
+
+```{r}
+#Number of unique combinations
+unique(paste(metadata_ind_interest_f1$country, metadata_ind_interest_f1$host_age_group, metadata_ind_interest_f1$host_lifestyle))
+length(unique(paste(metadata_ind_interest_f1$country, metadata_ind_interest_f1$host_age_group, metadata_ind_interest_f1$host_lifestyle)))
+```
+
+```{r}
+#Number of individuals per combination
+n_ind_by_comb = sort(table(paste(metadata_ind_interest_f1$country,"|" ,metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)))
+n_ind_by_comb
+```
+
+```{r}
+#TaxIDs by total individuals
+sort(colSums(presence_absence_by_ind_sp_table_f2))
+```
+Top Species:
+- Saccharomyces_cerevisiae(4932) is in 667 individuals (Total Prev: 0.339959)
+- Blastocystis_sp._subtype_3(944168) is in 471 individuals (Total Prev: 0.240061)
+- Blastocystis_sp._subtype_1(944036) is in 282 individuals (Total Prev: 0.143731)
+- Blastocystis_sp._subtype_2(944160) is in 242 individuals (Total Prev: 0.123344)
+- Malassezia_restricta(76775) is in 160 individuals (Total Prev: 0.081549)
+- Blastocystis_sp._subtype_4(944170) is in 82 individuals
+- Malassezia_globosa(76773) is in 23 individuals
+- Blastocystis_sp._subtype_6(944208) is in 12 individuals
+- Blastocystis_sp._subtype_8(429571) is in 7 individuals
+- Blastocystis_hominis(12968) is in 7 individuals
+- Saccharomyces_eubayanus(1080349) is in 4 individuals
+- Blastocystis_sp._subtype_9(1544353) is in 2 individuals
+- Saccharomyces_uvarum(230603) is in 1 individual
+- Malassezia_furfur(55194) is in 1 individual
+- Malassezia_dermatis(169489) is in 1 individual
+
+
+```{r}
+#Number of genera by individual
+print("Summary of Number of genera by individual:")
+summary(rowSums(presence_absence_by_ind_sp_table_f2))
+#Quick Frecuency by individual
+print("Number of Individuals by Genera detected:")
+table(rowSums(presence_absence_by_ind_sp_table_f2))
+```
+
+## Filter Combinations with low number of individuals (at least 5 individuals) (f2)
+```{r}
+#Get combs of interest
+combs_5_or_more = names(n_ind_by_comb)[n_ind_by_comb>=5]
+combs_5_or_more
+#Add combs column to metadata
+metadata_ind_interest_f1$comb = paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)
+#Merge comb column with presence_absence_by_ind_sp_table_f2
+presence_absence_by_ind_sp_table_f2_comb = merge(metadata_ind_interest_f1[,c("individual","comb")],presence_absence_by_ind_sp_table_f2,by.y = 0, by.x = "individual")
+#Drop individuals column
+presence_absence_by_ind_sp_table_f2_comb$individual <- NULL
+#Filter low ind combs
+presence_absence_by_ind_sp_table_f2_comb_f2 = presence_absence_by_ind_sp_table_f2_comb[presence_absence_by_ind_sp_table_f2_comb$comb %in% combs_5_or_more,]
+```
+
+## Get prevalence table by comb
+```{r}
+#Mean in presence-absence data is equivalent to prevalence
+prevalence_table_ind_sp_f2_comb_f2 = presence_absence_by_ind_sp_table_f2_comb_f2 %>% group_by(comb) %>% summarise(across(everything(), mean), .groups = 'drop') %>% as.data.frame()
+```
+
+## Quick exploration of max prevalence values
+```{r}
+print("Max prevalence values per taxid")
+head(sort(apply(prevalence_table_ind_sp_f2_comb_f2, 2, max)), -1)
+```
+
+
+## Format prevalence table for heatmaps
+```{r}
+#Change row names to comb values
+rownames(prevalence_table_ind_sp_f2_comb_f2) <- prevalence_table_ind_sp_f2_comb_f2$comb
+#Drop comb column
+prevalence_table_ind_sp_f2_comb_f2$comb <- NULL
+#Change taxids for genus-name(taxid)
+final_tax_names=c()
+for (taxid in names(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_taxonomy = taxonomy_sp_table_f1[taxonomy_sp_table_f1$TaxID==taxid,]
+  temp_tax_name = paste(temp_taxonomy$species,'(',temp_taxonomy$TaxID,')',sep = "")
+  final_tax_names = c(final_tax_names, temp_tax_name)
+}
+names(prevalence_table_ind_sp_f2_comb_f2) <- final_tax_names
+```
+
+
+## Get metadata of interest for combinations
+```{r}
+#Drop individuals columns
+metadata_combs = metadata_ind_interest_f1
+metadata_combs$individual <- NULL
+#unique values per comb
+metadata_combs_uniq = metadata_combs %>% group_by(comb) %>% summarise(across(everything(), unique), .groups = 'drop') %>% as.data.frame()
+#Add number of individuals per comb
+#Check that the order matches (all true in this case)
+#metadata_combs_uniq$comb==names(table(paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle)))
+metadata_combs_uniq$n_individuals <- table(paste(metadata_ind_interest_f1$country, "|",metadata_ind_interest_f1$host_age_group, "|",metadata_ind_interest_f1$host_lifestyle))
+```
+
+
+## Get prevalence heatmap (all combs of interest)
+```{r}
+#Get Lateral annotation (left)
+#N individuals
+#Set leyend breaks
+n_ind_breaks = c(5, 10, 20, 40, 60, 80, 100, 200, 300, 400, 500)
+#Get info for each group
+n_inds_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"n_individuals"]
+  n_inds_info = c(n_inds_info, temp_info)
+}
+#Set lateral info
+left_info <-ComplexHeatmap::rowAnnotation(`Individuals\nNumber`=anno_numeric(n_inds_info,
+                                          bg_gp = gpar(fill = "#FFFF9F", col = "#c3b59b"),
+                                          align_to = "right"), annotation_name_rot = 0)
+
+
+#Get Lateral annotations(right)
+
+##continent
+#Get info for each group
+continent_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"continent"]
+  continent_info = c(continent_info, temp_info)
+}
+#Get leyend and colors
+leyend_uniq_continents=na.exclude(unique(continent_info))
+continent_colors=colorRampPalette(brewer.pal(6, name="Set2"))(length(leyend_uniq_continents))
+names(continent_colors)=leyend_uniq_continents
+
+##country_HDI_group
+#Get info for each group
+hdi_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"country_HDI_group"]
+  hdi_info = c(hdi_info, temp_info)
+}
+#Get leyend and colors
+hdi_colors=c("Low"="#EDF8E9","Medium"="#BAE4B3","High"="#74C476","Very High"="#238B45")
+
+##host_age_group
+#Get info for each group
+age_group_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"host_age_group"]
+  age_group_info = c(age_group_info, temp_info)
+}
+#Get leyend and colors
+age_colors = c("Child"="#77dd77", "Teen" = "#FD5DA8","Adult"="#FF2400", "Elder"="#007FFF")
+
+##host_lifestyle
+#Get info for each group
+lifestyle_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"host_lifestyle"]
+  lifestyle_info = c(lifestyle_info, temp_info)
+}
+#Get leyend and colors
+lifestyle_colors = c("Rural"="#96dcf0", "Intermediate" = "#dbe899","Urban"="#e17084")
+
+##Include annotations
+lateral_info <-ComplexHeatmap::rowAnnotation(Continent=continent_info,`Country HDI Group`=hdi_info,`Age Group`=age_group_info, Lifestyle=lifestyle_info,
+                                             gp = grid::gpar(col ="black"),
+                                             col=list(Continent=continent_colors,`Country HDI Group`=hdi_colors,`Age Group`=age_colors, Lifestyle=lifestyle_colors),
+                                             annotation_legend_param=list(`Country HDI Group`=list(at=names(hdi_colors)),
+                                                                          `Age Group`=list(at=names(age_colors)), 
+                                                                          Lifestyle=list(at=names(lifestyle_colors))
+                                                                          )
+                                             )
+
+#Set color palette
+color_cor=c("#5E4FA2","#3288BD","#3288BD","#3288BD","#3288BD","#FEE08B","#FEE08B","#FEE08B","#F46D43","#F46D43","#9E0142")
+
+#htA1(GLOBAL)
+##Get initial heatmap
+htA1<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, 
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"),
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA1= grid.grabExpr(draw(htA1))
+gg_htA1=ggpubr::as_ggplot(gb_htA1)
+
+#htA2(BY AGE_groups)
+##Get initial heatmap
+htA2<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, 
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"), 
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              row_split=factor(age_group_info, levels = names(age_colors)),
+                              cluster_row_slices = FALSE,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA2= grid.grabExpr(draw(htA2))
+gg_htA2=ggpubr::as_ggplot(gb_htA2)
+
+#htA3(BY lifestyle)
+##Get initial heatmap
+htA3<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, 
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"),
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              row_split=factor(lifestyle_info, levels = names(lifestyle_colors)),
+                              cluster_row_slices = FALSE,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA3= grid.grabExpr(draw(htA3))
+gg_htA3=ggpubr::as_ggplot(gb_htA3)
+
+#htA4(BY Country HDI group)
+##Get initial heatmap
+htA4<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, 
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"),
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              row_split=factor(hdi_info, levels = names(hdi_colors)),
+                              cluster_row_slices = FALSE,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA4= grid.grabExpr(draw(htA4))
+gg_htA4=ggpubr::as_ggplot(gb_htA4)
+
+#htA5(BY Continent)
+##Get initial heatmap
+htA5<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, 
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"),
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              row_split=factor(continent_info, levels = names(continent_colors)),
+                              cluster_row_slices = FALSE,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA5= grid.grabExpr(draw(htA5))
+gg_htA5=ggpubr::as_ggplot(gb_htA5)
+
+#htA6(BY country)
+#Get info for each group
+country_info=c()
+for (comb in rownames(prevalence_table_ind_sp_f2_comb_f2)) {
+  temp_info = metadata_combs_uniq[metadata_combs_uniq$comb==comb,"country"]
+  country_info = c(country_info, temp_info)
+}
+
+##Get initial heatmap
+htA6<-ComplexHeatmap::Heatmap(prevalence_table_ind_sp_f2_comb_f2, heatmap_legend_param=list(title="Prevalence",at=c(0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1)),
+                              show_column_names = TRUE, row_title_rot = 0,
+                              column_title_side = "bottom", column_names_max_height = unit(10, "cm"),
+                              row_names_max_width = unit(10, "cm"),border_gp = grid::gpar(col = "black", lty = 1),
+                              col = color_cor,rect_gp = grid::gpar(col = "black", lwd = 2), 
+                              right_annotation = lateral_info, left_annotation = left_info,
+                              row_split=factor(country_info, levels = unique(country_info)),
+                              cluster_row_slices = FALSE,
+                              cell_fun=function(j, i, x, y, w, h, col) { grid.text(round(prevalence_table_ind_sp_f2_comb_f2[i, j],3), x, y)})
+##Convert to ggplot
+gb_htA6= grid.grabExpr(draw(htA6))
+gg_htA6=ggpubr::as_ggplot(gb_htA6)
+```
+
+
+## Plot Global
+```{r,fig.width=15,fig.height=15}
+gg_htA1
+```
+
+```{r}
+ggsave(gg_htA1,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_global.svg",height = 15,width =14)
+ggsave(gg_htA1,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_global.pdf",height = 15,width =14)
+```
+
+
+## PLot by Age Group
+```{r,fig.width=15,fig.height=15}
+gg_htA2
+```
+
+```{r}
+ggsave(gg_htA2,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_age_group.svg",height = 15,width =14)
+ggsave(gg_htA2,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_age_group.pdf",height = 15,width =14)
+```
+
+
+## PLot by Lifestyle
+```{r,fig.width=15,fig.height=15}
+gg_htA3
+```
+
+```{r}
+ggsave(gg_htA3,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_lifestyle.svg",height = 15,width =14)
+ggsave(gg_htA3,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_lifestyle.pdf",height = 15,width =14)
+```
+
+
+## PLot by Country HDI group
+```{r,fig.width=15,fig.height=15}
+gg_htA4
+```
+
+```{r}
+ggsave(gg_htA4,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_Country_HDI_group.svg",height = 15,width =14)
+ggsave(gg_htA4,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_Country_HDI_group.pdf",height = 15,width =14)
+```
+
+
+## PLot by Continent
+```{r,fig.width=15,fig.height=15}
+gg_htA5
+```
+
+```{r}
+ggsave(gg_htA5,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_Continent.svg",height = 15,width =14)
+ggsave(gg_htA5,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_Continent.pdf",height = 15,width =14)
+```
+
+
+## Plot by country
+```{r,fig.width=15,fig.height=15}
+gg_htA6
+```
+
+```{r}
+ggsave(gg_htA6,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_country.svg",height = 15,width =14)
+ggsave(gg_htA6,filename = "./Plots_species/Eukdetect_prevalence_study_0.1_prev_5_ind_by_country.pdf",height = 15,width =14)
+```

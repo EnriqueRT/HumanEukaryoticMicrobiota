@@ -1,0 +1,43 @@
+---
+title: "curatedMetagenomicData"
+author: "Enrique Roig Tormo"
+date: "Última modificación `r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+<div style="text-align: justify">
+
+
+# Load libraries
+```{r}
+library(curatedMetagenomicData)
+library(DT)
+library(dplyr)
+```
+
+
+# Obtaining curatedMetagenomicData tables
+```{r}
+# METADATA TABLE
+QinJ_2012 = sampleMetadata |> filter(study_name == "QinJ_2012")
+
+# Write metadata table in file
+write.table(QinJ_2012, quote=FALSE, sep="\t", row.names = FALSE, file = "QinJ_2012_R.tsv")
+```
+
+
+# Merge
+```{r}
+# Load table files to merge
+default_HMP2012 = read.csv("/home/enrique/Escritorio/Master/TFM/Muestras/Estudios/HMP/HMP_2012_2017/PRJNA48479_HMP2012/DEFAULT/filtered1_PRJNA48479_raw_metadata_defaultMode.tsv", sep = "\t")
+HMP2012_R = read.csv("/home/enrique/Escritorio/Master/TFM/Muestras/Estudios/HMP/HMP_2012_2017/PRJNA48479_HMP2012/DEFAULT/HMP_2012_R.tsv", sep = "\t")
+
+merge_HMP2012 = merge(default_HMP2012, HMP2012_R, by.x = "secondary_sample_accession", by.y = "sample_id")
+
+# Write metadata merge in file
+write.table(merge_HMP2012, quote=FALSE, sep="\t", row.names = FALSE, file = "merge_FINAL.tsv")
+```
