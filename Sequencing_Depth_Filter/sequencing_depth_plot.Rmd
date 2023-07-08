@@ -43,6 +43,8 @@ minimo_valor = min(concat_track_table$bowtie)
 # Merge the final track_table with the Bowtie reading count together with the total sum of taxa found per sample
 merge = merge(track_table_fi, conteos_fi, by = "Sample")
 
+data = as.data.frame(merge$Sample)
+
 # Create the dot plot with ggplot2
 ggplot(merge, aes(x = merge$bowtie, y = merge$Sum)) +
   geom_point(color = "#084081", size = 3) +
