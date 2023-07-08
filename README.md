@@ -4,6 +4,7 @@ This repository contains all the programs and scripts used to generate the resul
 
 ## Software
 
+- Omics Dataset Curation Toolkit (v.1)
 - Fastp (v.0.23.2)
 - Bowtie2 (v.2.5.1)
 - Samtools (v.1.16.1)
@@ -36,5 +37,5 @@ This repository contains all the programs and scripts used to generate the resul
 - reshape2
 - gridExtra
 
-## Contenido del repositorio
+## Repository content
 
