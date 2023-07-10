@@ -41,21 +41,49 @@ This repository contains all the programs and scripts used to generate the resul
 
 ### Correlation-Prevalence_Study
 
+In this directory can be found the programs necessary to generate the final analyses of the work:
+
 - The `matrix_correlation.ipynb` script has been used to generate the genus-genus correlation matrix.
-- The `eukdetec_prevalence_genus_study.rmd` script has been used to generate the genus level prevalence heatmaps
+- The `eukdetec_prevalence_genus_study.Rmd` script has been used to generate the genus level prevalence heatmaps
 - The `eukdetec_prevalence_species_heatmap_study.Rmd` script has been used to generate the species level prevalence heatmaps
 - The `eukdetec_prevalence_species_stackedplot_study.Rmd` script has been used to generate three stacked bar charts with the individual level prevalences
 
 ### EukDetect
 
+In order to be able to run EukDetect, it is necessary to generate a configuration file previously, customised for each project in the study. In this way, the program `generate_configfile.py` builds the necessary configuration file for each case. This program needs the following input arguments to generate the file:
+
 | Parameter | Description | 
 |   :---    |    :---     |
-| `-h, --help` | Show help message and exit. | 
-| `-i, --fastq_directory` | Valor 2   | 
-| `-l, --library_layout`   | Valor 5   |
-| `-r, --read_length`   | Valor 5   |
-| `-o1, --output_dir_eukdetect`   | Valor 5   |
-| `-o2, --output_dir_configfile`   | Valor 5   |
+| `-h, --help` | Show help message and exit. |
+| `-i, --fastq_directory` | Bowtie Samples Data Path. Indicate rute to processed Fastqs directory. | 
+| `-l, --library_layout` | Library Layout. Indicate whether reads are paired (true) or single (false). Permitted options are {true, false}.|
+| `-r, --read_length` | Read Length. Indicate length of the reads. |
+| `-o1, --output_dir_eukdetect` | Output Directory EukDetect Analysis. Indicate the path to the output directory for EukDetect analyses. |
+| `-o2, --output_dir_configfile` | Output Directory Configfile (Optional). Indicate the path to the output directory of configfle. Output file will be created in the current directory if not indicated. |
+
+The file `configfile_example.txt` contains an example output of this program.
+
+The `pres-abs_matrix_and_taxonomy.py` program performs an output analysis of EukDetect and generates presence/absence table of all taxa identified for each sample and a taxonomy table with each TaxID associated with its respective rank. This program needs the following input arguments to generate the outputs:
+
+| Parameter | Description | 
+|   :---    |    :---     |
+| `-h, --help` | Show help message and exit. |
+| `-i, --root_path` | Root Path. Root directory from which you want to start looking for all EukDetect outputs. Make sure the EukDetect outputs are inside that directory. |
+| `-e, --euk_dir_name` | EukDetect Ouput Directory Name. Indicate the name of directory where the EukDetect outputs are saved. |
+| `-r, --rank` | Taxonomic Rank. Specify one of the two allowed taxonomic ranges for which you want to obtain results. Permitted options are {genus, species}.|
+| `-p, --output_name_prefix` | Output Name Prefix (Optional). Indicate prefix name for the output files. |
+| `-o, --output_dir` | Output Directory (Optional). Indicate the path to the output directory. Output files will be created in the current directory if not indicated. |
+
+The outputs generated are the following files:
+
+- Presence/absence tables at genus and species level: `presence_absence_genus_table.tsv` and `presence_absence_species_table.tsv`.
+- Taxonomy tables at genus and species level: `taxonomy_genus_table.tsv` and `taxonomy_species_table.tsv`.
+
+The `EukDetect_example.batch` script shows the complete execution of the above programs in a `.batch` file which is executed in Garnatxa as follows:
+
+```
+sbatch EukDetect.batch
+```
 
 ### Projects
 
