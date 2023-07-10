@@ -1,6 +1,6 @@
 # Human Gut Eukaryotic Microbiota Project
 
-This repository contains all the programs and scripts used to generate the results of this project.The aim of this study is to explore a common group of eukaryotic taxa (core) in the microbiota of healthy individuals across different human populations worldwide. To this end, a collection of 33 public studies and meta-studies has been compiled, including the Human Microbiome Project (HMP) and Metagenomics of the Human Intestinal Tract (MetaHIT). 
+This repository contains all the programs and scripts used to generate the results of this project. The aim of this study is to explore a common group of eukaryotic taxa (core) in the microbiota of healthy individuals across different human populations worldwide. To this end, a collection of 33 public studies and meta-studies has been compiled, including the Human Microbiome Project (HMP) and Metagenomics of the Human Intestinal Tract (MetaHIT). 
 
 ## Software
 
@@ -39,15 +39,15 @@ This repository contains all the programs and scripts used to generate the resul
 
 ## Repository content
 
-###Correlation-Prevalence_Study
+### Correlation-Prevalence_Study
 
-###EukDetect
+### EukDetect
 
-###Projects
+### Projects
 
 The most relevant information on the curating and processing of each of the 33 studies has been included in this folder. Each project contains the same information:  
 
-- The `multiqc_stats` directory contains three tables with the statistics of the reads.
+- The `multiqc_stats` directory contains three tables with the statistics of the reads:
 
    *  `counts_track_table.tsv` is a table where the rows correspond to the samples and the columns to the reads for each sample of the three QC steps. 
 
@@ -57,11 +57,14 @@ The most relevant information on the curating and processing of each of the 33 s
 
 - The table `Metadata_Final.xls` contains the individual metadata.
 
-- The three HTML documents: `multiqc_report_bowtie.html`, `multiqc_report_fastp.html` and `multiqc_report_raw.html`, contain the statistics provided by MultiQC for each QC step (raw, Fastp and Bowtie2), respectively.
+- The three HTML documents: `multiqc_report_bowtie.html`, `multiqc_report_fastp.html` and `multiqc_report_raw.html` contain the statistics provided by MultiQC for each QC step (raw, Fastp and Bowtie2), respectively.
 
 - The document `samples_description.odt` contains a brief description of the sample curing process.
 
-###Quality_Control
 
-###Sequencing_Depth_Filter
+### Quality_Control
+
+
+
+### Sequencing_Depth_Filter
 
