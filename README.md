@@ -41,7 +41,21 @@ This repository contains all the programs and scripts used to generate the resul
 
 ### Correlation-Prevalence_Study
 
+- The `matrix_correlation.ipynb` script has been used to generate the genus-genus correlation matrix.
+- The `eukdetec_prevalence_genus_study.rmd` script has been used to generate the genus level prevalence heatmaps
+- The `eukdetec_prevalence_species_heatmap_study.Rmd` script has been used to generate the species level prevalence heatmaps
+- The `eukdetec_prevalence_species_stackedplot_study.Rmd` script has been used to generate three stacked bar charts with the individual level prevalences
+
 ### EukDetect
+
+| Parameter | Description | 
+|   :---    |    :---     |
+| `-h, --help` | Show help message and exit. | 
+| `-i, --fastq_directory` | Valor 2   | 
+| `-l, --library_layout`   | Valor 5   |
+| `-r, --read_length`   | Valor 5   |
+| `-o1, --output_dir_eukdetect`   | Valor 5   |
+| `-o2, --output_dir_configfile`   | Valor 5   |
 
 ### Projects
 
@@ -55,11 +69,11 @@ The most relevant information on the curating and processing of all 33 studies h
 
    *  `qc_stats_table.xls` is a table that shows overall statistics of reads per project, the length of the shortest and longest reads, the total number of reads, the average number of reads per sample and percentages associated with the average loss of reads per sample.
 
-- The table `Metadata_Final.xls` contains the individual metadata.
+- The `Metadata_Final.xls` table contains the individual metadata.
 
 - The three HTML documents: `multiqc_report_bowtie.html`, `multiqc_report_fastp.html` and `multiqc_report_raw.html` contain the statistics provided by MultiQC for each QC step (raw, Fastp and Bowtie2), respectively.
 
-- The document `samples_description.odt` contains a brief description of the sample curing process.
+- The `samples_description.odt` document contains a brief description of the sample curing process.
 
 
 ### Quality_Control
