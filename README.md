@@ -45,7 +45,7 @@ This repository contains all the programs and scripts used to generate the resul
 
 ### Projects
 
-The most relevant information on the curating and processing of each of the 33 studies has been included in this folder. Each project contains the same information:  
+The most relevant information on the curating and processing of all 33 studies has been included in this folder. Each project contains the same information:  
 
 - The `multiqc_stats` directory contains three tables with the statistics of the reads:
 
