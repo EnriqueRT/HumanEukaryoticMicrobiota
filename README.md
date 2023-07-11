@@ -39,6 +39,8 @@ This repository contains all the programs and scripts used to generate the resul
 
 ## Repository content
 
+The `GLOBAL_METADATA.tsv` file contains the global metadata table for all projects. The set of variables chosen are: `file_sample_name`, `run_accession`, `sample_accession`, `study_accession`, `study_code`, `SampleID`, `instrument_model`, `DNA_extraction_kit`, `individual`, `country`, `region`, `location`, `island`, `continent`, `country_HDI_group`, `host_country_HDI_group`, `host_country_HDI_group`, `host_country_HDI_group`, `host_country_HDI_group`, `continent`, `country_HDI`, `country_HDI_group`, `host_lifestyle`, `host_sub-lifestyle`, `host_state`, `host_age`, `host_age_group`, `host_sex`, `host_BMI`, `host_diet`, `host_ethnicity`, `familyID`, `family_level`, `sibling_twins`, `twin_type` and `pregnancy_status`.
+
 ### Correlation-Prevalence_Study
 
 In this directory can be found the programs necessary to generate the final analyses of the work:
@@ -50,7 +52,7 @@ In this directory can be found the programs necessary to generate the final anal
 
 ### EukDetect
 
-In order to be able to run EukDetect, it is necessary to generate a configuration file previously, customised for each project in the study. In this way, the program `generate_configfile.py` builds the necessary configuration file for each case. This program needs the following input arguments to generate the file:
+In order to be able to run EukDetect, it is necessary to generate a configfile previously, customised for each project in the study. In this way, the program `generate_configfile.py` builds the necessary configfile for each case. This program needs the following input arguments to generate the file:
 
 | Parameter | Description | 
 |   :---    |    :---     |
@@ -79,7 +81,7 @@ The outputs generated are the following files:
 - Presence/absence tables at genus and species level: `presence_absence_genus_table.tsv` and `presence_absence_species_table.tsv`.
 - Taxonomy tables at genus and species level: `taxonomy_genus_table.tsv` and `taxonomy_species_table.tsv`.
 
-The `EukDetect_example.batch` script shows the complete execution of the above programs in a `.batch` file which is executed in Garnatxa as follows:
+The `EukDetect_example.batch` script shows an example of the complete execution of the above programs in a `.batch` file which is executed in Garnatxa cluster as follows:
 
 ```
 sbatch EukDetect.batch
@@ -103,10 +105,43 @@ The most relevant information on the curating and processing of all 33 studies h
 
 - The `samples_description.odt` document contains a brief description of the sample curing process.
 
+Apart from these folders, two scripts have been included in this directory:
+
+- The `curatedMetagenomicData_example.rmd` script is an example of how the metadata tables have been obtained from the R package curatedMetagenomicData.
+
+- The `frequency_plots.Rmd` script has been used to obtain distribution plots of the percentage of individuals/samples by continent, HDI level, age group, lifestyle, gender and health status.
 
 ### Quality_Control
 
+In this directory can be found three folders belonging to each of the quality control steps:
 
+- The `Fastp` folder contains the required scripts to perform the cleaning of the reads:
+   *  The `fastp_qc_PAIRED.sh` and `fastp_qc_SINGLE.sh` scripts are used to clean up the `paired-end` and `single-end` file reads, respectively.
+   *  The scripts `fastp_qc_PAIRED_polyg.sh` and `fastp_qc_PAIRED_polyg.sh` are used to clean and trim reads that have poly-G tails at the 3' end (when the data came from NovaSeq or NextSeq sequencers), for both `paired-end` and `single-end` files.
+   *  The `fastp_quality_control_example.batch` script shows an example of the complete execution of the above scripts in a `.batch` file which is executed in Garnatxa cluster as follows
+
+```
+sbatch fastp_quality_control.batch
+```
+
+- The `Bowtie2` folder contains the required scripts to remove the DNA belonging to the host (Human Genome GRCh38.p14) and the added Illumina contaminant (Phix Phage Genome GCF_000819615.1):
+   *  The `host_contamination.Rmd` script is used to download these genomes and index them with Bowtie2.
+   *  The `QC_BW2_HumanPhix_PAIRED.sh` and `QC_BW2_HumanPhix_SINGLE.sh` scripts are used to give the execution commands to Bowtie2 and generate the FASTQ files from the BAM files sorted with Samtools.
+   *  The `bw2_human_phix_decontamination_example.batch` script shows an example of the complete execution of the above scripts in a `.batch` file which is executed in Garnatxa cluster as follows:
+
+```
+sbatch bw2_human_phix_decontamination.batch
+```
+
+- The `Check` folder contains the required scripts to evaluate the quality of the files with FastQC and MultiQC:
+   *  The `check_qc_programs_raw_example.batch`, `check_qc_programs_fastp_example.batch` and `check_qc_programs_bowtie_example.batch` scripts show an example of the execution of FastQC and MultiQC for each of the QC steps (raw, Fastp and Bowtie2) in a `.batch` file which is executed in Garnatxa cluster as follows:
+
+```
+sbatch check_qc_programs.batch
+```
 
 ### Sequencing_Depth_Filter
 
+- The `Final_Track_Tables` folder contains all `counts_track_table.tsv` tables for all projects and the concatenated table of all of them, `concat_track_table.tsv`, which combines all samples and their associated readings in the three QC steps.
+
+- The `sequencing_depth_plot.Rmd` script has been used to set the sequencing depth threshold.
