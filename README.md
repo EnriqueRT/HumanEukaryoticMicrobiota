@@ -95,7 +95,7 @@ The most relevant information on the curating and processing of all 33 studies h
 
    *  `counts_track_table.tsv` is a table where the rows correspond to the samples and the columns to the reads for each sample of the three QC steps. 
 
-   *  `percentages_track_table.tsv` is a table with the same structure, adding for each sample the percentages of readings left over with respect to the total in each of the steps with fastp and bowtie. 
+   *  `percentages_track_table.tsv` is a table with the same structure, adding for each sample the percentages of reads left over with respect to the total in each of the steps with fastp and bowtie. 
 
    *  `qc_stats_table.xls` is a table that shows overall statistics of reads per project, the length of the shortest and longest reads, the total number of reads, the average number of reads per sample and percentages associated with the average loss of reads per sample.
 
@@ -142,6 +142,6 @@ sbatch check_qc_programs.batch
 
 ### Sequencing_Depth_Filter
 
-- The `Final_Track_Tables` folder contains all `counts_track_table.tsv` tables for all projects and the concatenated table of all of them, `concat_track_table.tsv`, which combines all samples and their associated readings in the three QC steps.
+- The `Final_Track_Tables` folder contains all `counts_track_table.tsv` tables for all projects and the concatenated table of all of them, `concat_track_table.tsv`, which combines all samples and their associated reads in the three QC steps.
 
 - The `sequencing_depth_plot.Rmd` script has been used to set the sequencing depth threshold.
